@@ -1,4 +1,14 @@
-## UABEANext
+![GitHub Downloads (all assets, all releases)](https://img.shields.io/github/downloads/kurikomoe/UABEANext/total?labelColor=5c5c5c&color=8ab802)
+
+## UABEANext.mod
+
+Add a few extra functions.
+
+-----------------------------
+
+> upstream readme
+
+# UABEANext
 
 Nightly:
 
