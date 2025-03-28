@@ -37,6 +37,22 @@
           <TextBlock>Import</TextBlock>
         </StackPanel>
       </Button>
+      <Button MaxWidth="100" Command="{Binding FilterData}" Name="showFiltersBtn">
+        <StackPanel Orientation="Horizontal">
+          <Image Source="" Margin="0,0,3,0" />
+          <TextBlock>Filter Data</TextBlock>
+        </StackPanel>
+        <Button.Flyout>
+          <MenuFlyout ItemsSource="{Binding FilterItems}">
+            <MenuFlyout.ItemContainerTheme>
+              <ControlTheme TargetType="MenuItem" BasedOn="{StaticResource {x:Type MenuItem}}" x:DataType="docs:FilterItemInfo">
+                <Setter Property="Header" Value="{Binding Name}"/>
+                <Setter Property="Command" Value="{Binding Execute}"/>
+              </ControlTheme>
+            </MenuFlyout.ItemContainerTheme>
+          </MenuFlyout>
+          </Button.Flyout>
+      </Button>
       <Button MaxWidth="100" Command="{Binding EditDump}">
         <StackPanel Orientation="Horizontal">
           <Image Source="avares://UABEANext4/Assets/Icons/action-view-info.png" Margin="0,0,3,0" />

@@ -17,6 +17,8 @@ using System.Reactive.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Avalonia.Controls;
+using Avalonia.Media;
 using UABEANext4.AssetWorkspace;
 using UABEANext4.Logic;
 using UABEANext4.Logic.ImportExport;
@@ -47,6 +49,7 @@ public partial class AssetDocumentViewModel : Document
     public ObservableCollection<PluginItemInfo> _pluginsItems;
 
     public event Action? ShowPluginsContextMenu;
+    public event Action? ShowFiltersContextMenu;
 
     private readonly Action<string> _setDataGridFilterDb;
 
@@ -67,6 +70,8 @@ public partial class AssetDocumentViewModel : Document
             .ToDictionary(enm => enm, enm => enm.ToString());
 
         PluginsItems = new();
+        FilterItems = new ();
+        Filter = null;
 
         Id = TOOL_TITLE.Replace(" ", "");
         Title = TOOL_TITLE;
@@ -90,6 +95,7 @@ public partial class AssetDocumentViewModel : Document
             .ToDictionary(enm => enm, enm => enm.ToString());
 
         PluginsItems = new();
+        FilterItems = new();
 
         Id = TOOL_TITLE.Replace(" ", "");
         Title = TOOL_TITLE;
@@ -146,11 +152,23 @@ public partial class AssetDocumentViewModel : Document
         var observableList = sourceList
             .Connect()
             .MergeMany(e => e.ToObservableChangeSet())
-            .Transform(a => (AssetInst)a);
+            .Transform(a => (AssetInst)a)
+            .Filter(a => Filter == null || a.Type == Filter);
 
         _disposableLastList = observableList.Bind(out var items).Subscribe();
         Items = items;
         FileInsts = fileInsts;
+        
+        FilterItems.Clear();
+        FilterItems.Add(new FilterItemInfo("Clear Filter", null, this));
+        FilterItems.AddRange(
+            FileInsts
+                .Select(file => file.file.Metadata.AssetInfos)
+                .SelectMany(d => d)
+                .Select(assetInfos => ((AssetInst)assetInfos).Type)
+                .Distinct()
+                .Select(e => new FilterItemInfo(e.ToString(), e, this))
+        );
 
         CollectionView = new DataGridCollectionView(Items);
         CollectionView.Filter = SetDataGridFilter(SearchText);
@@ -486,6 +504,14 @@ public partial class AssetDocumentViewModel : Document
         }
     }
 
+    public AssetClassID? Filter = null;
+    [ObservableProperty]
+    public ObservableCollection<FilterItemInfo> _filterItems;
+    public void FilterData()
+    {
+        ShowFiltersContextMenu?.Invoke();
+    }
+
     public async void AddAsset()
     {
         var dialogService = Ioc.Default.GetRequiredService<IDialogService>();
@@ -555,6 +581,32 @@ public class PluginItemInfo
                 _docViewModel.ResendSelectedAssetsSelected();
             }
         }
+    }
+
+    public override string ToString()
+    {
+        return Name;
+    }
+}
+
+public class FilterItemInfo
+{
+    public string Name { get; }
+
+    private AssetClassID? _type;
+    private AssetDocumentViewModel _docViewModel;
+
+    public FilterItemInfo(string name, AssetClassID? type, AssetDocumentViewModel docViewModel)
+    {
+        Name = name;
+        _type = type;
+        _docViewModel = docViewModel;
+    }
+
+    public async Task Execute()
+    {
+        _docViewModel.Filter = _type;
+        _docViewModel.Load(_docViewModel.FileInsts);
     }
 
     public override string ToString()
