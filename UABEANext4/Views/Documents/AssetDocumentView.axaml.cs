@@ -14,12 +14,18 @@ public partial class AssetDocumentView : UserControl
         if (DataContext is AssetDocumentViewModel docVm)
         {
             docVm.ShowPluginsContextMenu += ShowPluginsContextMenu;
+            docVm.ShowFiltersContextMenu += ShowFiltersContextMenu;
         }
     }
 
     private void ShowPluginsContextMenu()
     {
         FlyoutBase.ShowAttachedFlyout(showPluginsBtn);
+    }
+    
+    private void ShowFiltersContextMenu()
+    {
+        FlyoutBase.ShowAttachedFlyout(showFiltersBtn);
     }
 
     // necessary since SelectedItems isn't bindable

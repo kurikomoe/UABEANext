@@ -1,6 +1,7 @@
 name: Build UABEA Windows
 
 on:
+  workflow_dispatch:
   push:
     branches: [ master ]
   pull_request:
@@ -9,12 +10,18 @@ on:
 jobs:
   build:
     runs-on: windows-2022
+    permissions:
+      contents: write
 
     steps:
     - name: Checkout
       uses: actions/checkout@v2
       with:
         fetch-depth: 0
+
+    - name: Set Date
+      run: echo "DATE=$(Get-Date -Format 'yyyy-MM-dd')" >> $env:GITHUB_ENV
+      shell: powershell
 
     - name: Install .NET Core
       uses: actions/setup-dotnet@v3
@@ -26,12 +33,24 @@ jobs:
 
     - name: Build
       run: msbuild UABEANext4.sln /restore /p:Configuration=Release
-    
+
     - name: Remove unused platforms
       run: Get-ChildItem -Path "UABEANext4.Desktop\bin\Release\net8.0\runtimes" -Directory | Where-Object { $_.Name -notin @("win-x64", "win7-x64", "win") } | Remove-Item -Recurse -Force
-      
+
     - name: Upload
       uses: actions/upload-artifact@v4
       with:
         name: uabea-windows
         path: UABEANext4.Desktop/bin/Release/net8.0
+
+    - uses: vimtor/action-zip@v1.2
+      with:
+        files: UABEANext4.Desktop/bin/Release/net8.0
+        dest: uabea-nightly-kurikomoe-${{ env.DATE }}.zip
+
+    - uses: ncipollo/release-action@v1
+      with:
+        artifacts: "uabea-nightly-kurikomoe-${{ env.DATE }}.zip"
+        name: "UABEA Windows Nightly Build"
+        tag: "nightly-${{ env.DATE }}"
+        body: "![](https://img.shields.io/github/downloads/kurikomoe/UABEANext/nightly-${{ env.DATE }}/total?style=flat-square&label=%E4%B8%8B%E8%BD%BD%E9%87%8F%EF%BC%9A&labelColor=5c5c5c&color=8ab802)\nAuto published by GitHub Actions."

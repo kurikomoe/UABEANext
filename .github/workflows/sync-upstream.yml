@@ -1,0 +1,39 @@
+name: 'Upstream Sync'
+
+on:
+  schedule:
+    - cron:  '44 4 * * *'
+  workflow_dispatch:  # click the button on Github repo!
+
+jobs:
+    sync_upstream:
+        runs-on: ubuntu-latest
+        name: Sync latest commits from upstream repo
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v3
+              with:
+                ref: master
+                fetch-depth: 0
+
+            - uses: imba-tjd/rebase-upstream-action@master
+              with:  # all args are optional
+                upstream: nesrak1/UABEANext
+                branch:   master
+
+              # Step 4: Print a helpful timestamp for your records (not required, just nice)
+            - name: Timestamp
+              run: date
+
+            - name: Commit Changes
+              uses: EndBug/add-and-commit@v9.1.4
+              with:
+                committer_name: GitHub Actions
+                committer_email: 41898282+github-actions[bot]@users.noreply.github.com
+                message: "sync upstream"
+
+            - name: Setup upterm session
+              uses: lhotari/action-upterm@v1
+              if: ${{ failure() }}
+              with:
+                wait-timeout-minutes: 5
