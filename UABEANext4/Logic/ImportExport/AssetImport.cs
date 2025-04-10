@@ -42,7 +42,7 @@ public class AssetImport
         }
         catch (Exception ex)
         {
-            exceptionMessage = ex.Message;
+            exceptionMessage = ex.ToString();
             return null;
         }
         return ms.ToArray();
@@ -204,7 +204,7 @@ public class AssetImport
         }
         catch (Exception ex)
         {
-            exceptionMessage = ex.Message;
+            exceptionMessage = ex.ToString();
             return null;
         }
         return ms.ToArray();
@@ -401,7 +401,19 @@ public class AssetImport
             JToken dataToken = ExpectAndReadField(refdObjectToken, "data", tempField);
 
             typeRef.WriteAsset(writer);
-            AssetTypeTemplateField objectTempField = _refMan.GetTemplateField(typeRef);
+            if (typeRef.ClassName == string.Empty && typeRef.Namespace == string.Empty && typeRef.AsmName == string.Empty)
+            {
+                // this is a null entry which has no data after it
+                continue;
+            }
+
+            AssetTypeTemplateField? objectTempField = _refMan.GetTemplateField(typeRef);
+            if (objectTempField == null)
+            {
+                throw new Exception($"Failed to get managed reference type. Wanted {typeRef.ClassName}.{typeRef.Namespace}"
+                    + $" in {typeRef.AsmName} but got a null result.");
+            }
+
             RecurseJsonImport(writer, objectTempField, dataToken);
         }
 
